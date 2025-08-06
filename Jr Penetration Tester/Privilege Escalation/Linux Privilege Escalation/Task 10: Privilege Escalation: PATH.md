@@ -1,4 +1,4 @@
-#### In Linux, the PATH environment variable defines where the system looks for executables. If a writable folder is included in PATH, an attacker can hijack an application to execute a malicious script.
+## In Linux, the PATH environment variable defines where the system looks for executables. If a writable folder is included in PATH, an attacker can hijack an application to execute a malicious script.
 
 ### Q.1: What is the odd folder you have write access for?
 
