@@ -3,11 +3,6 @@ I'm writing my own write-up on the lab named [Windows Privilege Escalation](http
 
 ![png](https://cyb3r53c.com/wp-content/uploads/2023/03/PrivilegeEscalation.png)
 
-**I will be skipping over the following tasks since it is read-only to complete:**
-- Task 1: Introduction
-- Task 8: Tools of the Trade
-- Task 9: Conclusion
-
 ## Task 1: Introduction
 During a penetration test, you will often have access to some Windows hosts with an unprivileged user. Unprivileged users will hold limited access, including their files and folders only, and have no means to perform administrative tasks on the host, preventing you from having complete control over your target.
 
@@ -82,6 +77,29 @@ The instructions tell use exactly what to do. Start with cmdkey to see for which
 Sure enough, we have a saved credential for mike. Now run the following command to run cmd with his credentials: 
 ```runas /savecred /user:mike.katz cmd.exe```
 It will open **cmd.exe**. In cmd, search for a file named **flag.txt** like this: ```dir C:\flag.txt /s /p``` 
-Change to that directory with: ```cd C:\Users\mike.katz\Desktop``` To list files in that directory: ```dir``` and read the text file ```type flag.txt```
 
+Change to that directory with: ```cd C:\Users\mike.katz\Desktop```, then list files in that directory: ```dir``` and read the text file following command: ```type flag.txt```
 
+![Flag](images/flag.png)
+#### Answer: THM{WHAT_IS_MY_PASSWORD}
+
+### Q.4: Retrieve the saved password stored in the saved PuTTY session under your profile. What is the password for the thom.smith user?
+This one is also literally described in the task. Run the following command to search under the following registry key for ProxyPassword:
+```
+reg query HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\ /f "Proxy" /s
+```
+![saved PuTTY session](images/password_thom.smith.png)
+
+#### Answer: CoolPass2021
+
+## Task 4: Other Quick Wins
+This task is all about abusing Task Scheduler tasks that have been configured to run an executable file that we can change to run a netcat reverse shell.
+
+Privilege escalation can be facilitated through misconfigurations, such as those found in scheduled tasks or Windows installer files. These techniques are often more relevant in Capture The Flag (CTF) events than real penetration testing engagements.
+1. Scheduled Tasks:
+  - Misconfigured Task: A scheduled task may run a binary you can modify. You can list tasks with schtasks /query and check the file permissions using icacls.
+  - Privilege Escalation: If a scheduled task’s executable is accessible, modify it to execute a reverse shell. For example, replace the task’s binary with a command to spawn a reverse shell using nc64.exe.
+  - Triggering the Task: Once the task is modified, use schtasks /run to manually execute it and get a reverse shell with the user privileges of the scheduled task.
+2. AlwaysInstallElevated:
+  - Windows Installer: MSI files can be set to run with elevated privileges if registry keys are configured. This allows unprivileged users to run an MSI that executes with administrator rights.
+  - Registry Check: Use reg query to check if the necessary registry keys are set. If they are, generate a malicious MSI file using msfvenom and execute it with msiexec to get a reverse shell.
