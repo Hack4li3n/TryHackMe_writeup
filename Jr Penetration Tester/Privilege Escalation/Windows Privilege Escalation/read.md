@@ -61,6 +61,7 @@ To read the Powershell history enter the following command: ```type $Env:userpro
 ![Reading Powershell history](images/julia.jones%20password.png)
 There on line 6 we find her password.
 #### Answer: ZuperCkretPa5z
+
 ### Q.2: A web server is running on the remote host. Find any interesting password on web.config files associated with IIS. What is the password of the db_admin user?
 According to the task, there are two possible locations where we can find these web.config files:
 - C:\inetpub\wwwroot\web.config
@@ -69,3 +70,14 @@ The first one does not exist on the system, but if we run the command with the s
 ```
 type C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\web.config | findstr connectionString
 ```
+![Reading web.config](images/reading_web.config_file.png)
+In the connectionString we find this including the password:
+**add connectionString="Server=thm-db.local;Database=thm-sekure;User ID=db_admin;Password=098n0x35skjD3" name="THM-DB"**
+#### Answer: 098n0x35skjD3
+
+### Q.3: There is a saved password on your Windows credentials. Using cmdkey and runas, spawn a shell for mike.katz and retrieve the flag from his desktop.
+The instructions tell use exactly what to do. Start with cmdkey to see for which users we have saved credentials:```cmdkey /list```
+
+Sure enough, we have a saved credential for mike. Now run the following command to run cmd with his credentials: 
+```runas /savecred /user:mike.katz cmd.exe```
+
