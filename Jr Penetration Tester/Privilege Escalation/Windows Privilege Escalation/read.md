@@ -58,3 +58,14 @@ Additionally, special built-in accounts exist:
 
 To read the Powershell history enter the following command: ```type $Env:userprofile\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt```
 
+![Reading Powershell history](images/julia.jones%20password.png)
+There on line 6 we find her password.
+#### Answer: ZuperCkretPa5z
+### Q.2: A web server is running on the remote host. Find any interesting password on web.config files associated with IIS. What is the password of the db_admin user?
+According to the task, there are two possible locations where we can find these web.config files:
+- C:\inetpub\wwwroot\web.config
+- C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\web.config
+The first one does not exist on the system, but if we run the command with the second location we find a connectionString:
+```
+type C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\web.config | findstr connectionString
+```
