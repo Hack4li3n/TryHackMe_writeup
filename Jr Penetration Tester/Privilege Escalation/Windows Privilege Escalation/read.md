@@ -36,3 +36,25 @@ Additionally, special built-in accounts exist:
 #### Answer: aye
 
 ## Task 3: Harvesting Passwords from Usual Spots
+1. Unattended Windows Installations
+  Administrators often leave credentials in configuration files used for automated installations:
+  - C:\Unattend.xml
+  - C:\Windows\Panther\Unattend.xml
+  - C:\Windows\system32\sysprep.inf
+2. PowerShell History
+  PowerShell logs executed commands, including those containing passwords. Retrieve them via:
+  ```type %userprofile%\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt```
+3. Saved Windows Credentials
+   Windows allows users to store credentials, which can be listed with: ```cmdkey /list```
+   Use stored credentials with: ```runas /savecred /user:admin cmd.exe```
+4. IIS Configuration Files
+  Web server configurations may contain stored passwords in web.config:
+    - C:\inetpub\wwwroot\web.config
+    - C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\web.config
+  Search for database credentials: ```type C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Config\web.config | findstr connectionString```
+5. PuTTY Stored Credentials
+  PuTTY stores proxy credentials in the registry. Retrieve them with: ```reg query HKEY_CURRENT_USER\Software\SimonTatham\PuTTY\Sessions\ /f "Proxy" /s```
+### Q.1: A password for the julia.jones user has been left on the Powershell history. What is the password?
+
+To read the Powershell history enter the following command: ```type $Env:userprofile\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt```
+
