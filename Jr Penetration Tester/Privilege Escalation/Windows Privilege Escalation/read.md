@@ -265,3 +265,4 @@ You should have received a reverse shell. Then find the flag on the administrato
    - Exploitation: Attackers can exploit these privileges by compromising services like IIS, which use accounts with impersonation privileges (e.g., LOCAL SERVICE, NETWORK SERVICE). Using tools like RogueWinRM, an attacker can spawn a process that impersonates a privileged user (e.g., SYSTEM) and execute commands remotely via a malicious connection.
 
 These privileges represent common opportunities for attackers to escalate their privileges and gain more control over a compromised system.
+### Q: Get the flag on the Administrator's desktop.
