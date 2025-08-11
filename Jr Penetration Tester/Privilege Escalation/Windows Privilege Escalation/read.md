@@ -249,3 +249,19 @@ sc start THMService
 You should have received a reverse shell. Then find the flag on the administrator’s desktop and read it.
 ![Receiving a shell & Reading the flag](images/administrator_flag.png)
 #### Answer: THM{INSECURE_SVC_CONFIG}
+
+## Task 6: Abusing dangerous privileges
+1. Privileges Overview:
+   - Privileges grant rights to perform system tasks like shutting down the system or bypassing access controls. Key privileges are of interest to attackers for escalating privileges.
+   - The `whoami /priv` command shows the privileges of the current user.
+2. SeBackup / SeRestore Privileges:
+   - Description: These privileges allow bypassing DACLs to read/write any file, useful for backup operations.
+   - Exploitation: Attackers can use these privileges to copy registry hives (SAM and SYSTEM) and extract password hashes. Tools like Impacket’s `secretsdump` can be used to retrieve the hashes and then perform Pass-the-Hash attacks to gain SYSTEM access.
+3. SeTakeOwnership Privilege:
+   - Description: Allows users to take ownership of any file or object on the system.
+   - Exploitation: An attacker can use this privilege to replace system executables (like utilman.exe), giving themselves SYSTEM-level access. The process includes taking ownership of the file, granting full permissions, and replacing the executable with a payload.
+4. SeImpersonate / SeAssignPrimaryToken Privileges:
+   - Description: These privileges allow a process to impersonate another user, enabling it to act on their behalf.
+   - Exploitation: Attackers can exploit these privileges by compromising services like IIS, which use accounts with impersonation privileges (e.g., LOCAL SERVICE, NETWORK SERVICE). Using tools like RogueWinRM, an attacker can spawn a process that impersonates a privileged user (e.g., SYSTEM) and execute commands remotely via a malicious connection.
+
+These privileges represent common opportunities for attackers to escalate their privileges and gain more control over a compromised system.
