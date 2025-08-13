@@ -266,3 +266,6 @@ You should have received a reverse shell. Then find the flag on the administrato
 
 These privileges represent common opportunities for attackers to escalate their privileges and gain more control over a compromised system.
 ### Q: Get the flag on the Administrator's desktop.
+In this task, we can decide between three different methods: SeBackup / SeRestore, SeTakeOwnership, SeImpersonate / SeAssignPrimaryToken. I will pick the Backup route as it seems to involve of a few techniques I find great to learn.
+RDP into the target machine, for example by using `Remmina` on your **AttackBox**. When logged in you can go ahead and run a command prompt **as administrator**.
+You should now be able to see your privileges with the command: `whoami /priv`
